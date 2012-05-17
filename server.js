@@ -7,7 +7,7 @@ var _response = undefined,
     serverError = 2;
 
 process.on('uncaughtException', function (err) {
-    console.error(err.stack);
+    util.debug(err.stack);
 
     _response.writeHead(500, {'content-type': 'text/plain' });
     _response.write('ERROR:' + err.stack);
@@ -41,8 +41,8 @@ function GetFederalStatesAndDistricts(){
             try {
                 pageJson = JSON.parse(pageData);
             } catch (SyntaxError) {
-                console.log('Invalid JSON:');
-                console.log(pageData);
+                util.debug('Invalid JSON:');
+                util.debug(pageData);
             }
 
             if(!pageJson) {
@@ -61,7 +61,7 @@ function GetFederalStatesAndDistricts(){
             }
         });
     }).on('error', function(e) {
-            console.log("Got error: " + e.stack);
+            util.debug("Got error: " + e.stack);
             _response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
             _response.write(JSON.stringify({success: false, errorId: serverError}));
             _response.end('\n');
@@ -95,8 +95,8 @@ function GetAllStationsForFederalState(urlParts){
             try {
                 pageJson = JSON.parse(pageData);
             } catch (SyntaxError) {
-                console.log('Invalid JSON:');
-                console.log(pageData);
+                util.debug('Invalid JSON:');
+                util.debug(pageData);
             }
 
             if(!pageJson) {
@@ -112,7 +112,7 @@ function GetAllStationsForFederalState(urlParts){
             }
         });
     }).on('error', function(e) {
-            console.log("Got error: " + e.stack);
+            util.debug("Got error: " + e.stack);
             _response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
             _response.write(JSON.stringify({success: false, errorId: serverError}));
             _response.end('\n');
@@ -146,8 +146,8 @@ function GetStationsForDistrict(urlParts){
             try {
                 pageJson = JSON.parse(pageData);
             } catch (SyntaxError) {
-                console.log('Invalid JSON:');
-                console.log(pageData);
+                util.debug('Invalid JSON:');
+                util.debug(pageData);
             }
 
             if(!pageJson) {
@@ -163,7 +163,7 @@ function GetStationsForDistrict(urlParts){
             }
         });
     }).on('error', function(e) {
-            console.log("Got error: " + e.stack);
+            util.debug("Got error: " + e.stack);
             _response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
             _response.write(JSON.stringify({success: false, errorId: serverError}));
             _response.end('\n');
@@ -240,5 +240,7 @@ var server = http.createServer(function(request, response) {
 //        req.end();
 });
 
-server.listen(3000, "127.0.0.1");
+//server.listen(3000, "127.0.0.1");
+util.debug(process.env.PORT);
+server.listen(process.env.PORT || 8001);
 
