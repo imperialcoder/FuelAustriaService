@@ -189,8 +189,8 @@ function getFederalState(stateObjects){
 }
 
 function emptyResponse() {
-    _response.writeHead(200, { "Content-Type": "text/plain", "Access-Control-Allow-Origin": "*" });
-    _response.write('Command not recognized');
+    _response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+    _response.write({success: true, data: 'Command not recognized'});
     _response.end();
     _response = undefined;
 }
