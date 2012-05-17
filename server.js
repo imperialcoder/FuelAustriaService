@@ -2,24 +2,17 @@ var util = require("util"),
     http = require("http"),
     url = require("url");
 
-var _response = undefined,
-    maintenanceError = 1,
+var maintenanceError = 1,
     serverError = 2;
 
 process.on('uncaughtException', function (err) {
     util.debug(err.stack);
-
-    _response.writeHead(500, {'content-type': 'text/plain' });
-    _response.write('ERROR:' + err.stack);
-    _response.end('\n');
-    _response = undefined;
 });
-
 
 util.debug("Starting");
 
 //http://127.0.0.1:3000/BaseData/
-function GetFederalStatesAndDistricts(){
+function GetFederalStatesAndDistricts(response){
 
     var options = {
         host: 'www.spritpreisrechner.at',
@@ -46,31 +39,28 @@ function GetFederalStatesAndDistricts(){
             }
 
             if(!pageJson) {
-                _response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-                _response.write(JSON.stringify({success: false, errorId: maintenanceError}));
-                _response.end('\n');
-                _response = undefined;
+                response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+                response.write(JSON.stringify({success: false, erroCode: maintenanceError}));
+                response.end('\n');
             } else {
 
                 var federalStates = getFederalState(pageJson);
 
-                _response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-                _response.write(JSON.stringify(federalStates));
-                _response.end();
-                _response = undefined;
+                response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+                response.write(JSON.stringify(federalStates));
+                response.end();
             }
         });
     }).on('error', function(e) {
             util.debug("Got error: " + e.stack);
-            _response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-            _response.write(JSON.stringify({success: false, errorId: serverError}));
-            _response.end('\n');
-            _response = undefined;
+            response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+            response.write(JSON.stringify({success: false, errorCode: serverError}));
+            response.end('\n');
     });
 }
 
 //http://127.0.0.1:3000/AllStations/?federalState=1&fuel=DIE&closedStations=checked
-function GetAllStationsForFederalState(urlParts){
+function GetAllStationsForFederalState(response, urlParts){
     var data = '[' + urlParts.federalState + ', \"BL\", \"' + urlParts.fuel +'\", \"' + urlParts.closedStations + '\"]';
     data = '/ts/BezirkStationServlet?data=' + encodeURIComponent(data);
 
@@ -100,28 +90,25 @@ function GetAllStationsForFederalState(urlParts){
             }
 
             if(!pageJson) {
-                _response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-                _response.write(JSON.stringify({success: false, errorId: maintenanceError}));
-                _response.end('\n');
-                _response = undefined;
+                response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+                response.write(JSON.stringify({success: false, errorCode: maintenanceError}));
+                response.end('\n');
             } else {
-                _response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-                _response.write(JSON.stringify(pageJson));
-                _response.end();
-                _response = undefined;
+                response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+                response.write(JSON.stringify({success: true, data: pageJson}));
+                response.end();
             }
         });
     }).on('error', function(e) {
             util.debug("Got error: " + e.stack);
-            _response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-            _response.write(JSON.stringify({success: false, errorId: serverError}));
-            _response.end('\n');
-            _response = undefined;
+            response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+            response.write(JSON.stringify({success: false, errorCode: serverError}));
+            response.end('\n');
         });
 }
 
 //http://127.0.0.1:3000/DistrictStations/?district=101&fuel=DIE&closedStations=checked
-function GetStationsForDistrict(urlParts){
+function GetStationsForDistrict(response, urlParts){
     var data = '[' + urlParts.district + ', \"PB\", \"' + urlParts.fuel +'\", \"' + urlParts.closedStations + '\"]';
     data = '/ts/BezirkStationServlet?data=' + encodeURIComponent(data);
 
@@ -151,23 +138,20 @@ function GetStationsForDistrict(urlParts){
             }
 
             if(!pageJson) {
-                _response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-                _response.write(JSON.stringify({success: false, errorId: maintenanceError}));
-                _response.end('\n');
-                _response = undefined;
+                response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+                response.write(JSON.stringify({success: false, errorCode: maintenanceError}));
+                response.end('\n');
             } else {
-                _response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-                _response.write(JSON.stringify(pageJson));
-                _response.end();
-                _response = undefined;
+                response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+                response.write(JSON.stringify({success: true, data: pageJson}));
+                response.end();
             }
         });
     }).on('error', function(e) {
             util.debug("Got error: " + e.stack);
-            _response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-            _response.write(JSON.stringify({success: false, errorId: serverError}));
-            _response.end('\n');
-            _response = undefined;
+            response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+            response.write(JSON.stringify({success: false, errorCode: serverError}));
+            response.end('\n');
         });
 }
 
@@ -188,35 +172,29 @@ function getFederalState(stateObjects){
     return result;
 }
 
-function emptyResponse() {
-    _response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-    _response.write(JSON.stringify({success: true, data: 'Command not recognized'}));
-    _response.end();
-    _response = undefined;
+function emptyResponse(response) {
+    response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+    response.write(JSON.stringify({success: true, data: 'Command not recognized'}));
+    response.end();
 }
 
 //server
 var server = http.createServer(function(request, response) {
 
-    _response = response;
-
     var urlParts = url.parse(request.url,true);
-
-//    var urlArr = request.url.split("/"),
-//        method = urlArr[1];
 
     switch (urlParts.pathname) {
         case "/BaseData/":
-            GetFederalStatesAndDistricts();
+            GetFederalStatesAndDistricts(response);
             break;
         case "/AllStations/":
-            GetAllStationsForFederalState(urlParts.query);
+            GetAllStationsForFederalState(response, urlParts.query);
             break;
         case "/DistrictStations/":
-            GetStationsForDistrict(urlParts.query);
+            GetStationsForDistrict(response, urlParts.query);
             break;
         default:
-            emptyResponse();
+            emptyResponse(response);
             break;
     }
 
@@ -240,7 +218,6 @@ var server = http.createServer(function(request, response) {
 //        req.end();
 });
 
-//server.listen(3000, "127.0.0.1");
-util.debug(process.env.PORT);
-server.listen(process.env.PORT || 8001);
+util.debug('Listening on Port: ' + (process.env.PORT || 30000));
+server.listen(process.env.PORT || 30000);
 
