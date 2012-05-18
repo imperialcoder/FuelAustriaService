@@ -1,6 +1,7 @@
 var util = require("util"),
     http = require("http"),
-    url = require("url");
+    url = require("url"),
+    querystring = require('querystring');
 
 var maintenanceError = 1,
     serverError = 2;
@@ -206,6 +207,64 @@ function GetStationsPerGps(response, urlParts) {
         });
 }
 
+function GetAddressValues(response, urlParts){
+    var data = {};
+    data.q = urlParts.address;
+    data.maxRows = 10;
+    data.country= 'AT';
+    data.fuzzy = 0.8;
+    data.featureClass= 'P';
+    data.username = 'imperialcoder';
+    util.debug(querystring.stringify(data));
+    data = '/searchJSON?' + querystring.stringify(data);
+    util.debug(data);
+
+    // http://api.geonames.org/searchJSON?q=Söchau&country=AT&maxRows=10&username=demo&lang=de&fuzzy=0.8&featureClass=P
+
+    var options = {
+        host: 'api.geonames.org',
+        port: 80,
+        path: data,
+        method: "GET"
+    };
+
+
+    http.get(options, function(res) {
+        var pageData = "";
+
+        res.on('data', function (chunk) {
+            pageData += chunk;
+        });
+
+        res.on('end', function(){
+            var pageJson = undefined;
+
+            try {
+                pageJson = JSON.parse(pageData);
+                pageJson = pageJson.geonames;
+            } catch (SyntaxError) {
+                util.debug('Invalid JSON:');
+                util.debug(pageData);
+            }
+
+            if(!pageJson) {
+                response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+                response.write(JSON.stringify({success: false, errorCode: maintenanceError}));
+                response.end('\n');
+            } else {
+                response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+                response.write(JSON.stringify({success: true, data: pageJson}));
+                response.end();
+            }
+        });
+    }).on('error', function(e) {
+            util.debug("Got error: " + e.stack);
+            response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+            response.write(JSON.stringify({success: false, errorCode: serverError}));
+            response.end('\n');
+        });
+}
+
 //helper
 function getFederalState(stateObjects){
     var states = [];
@@ -257,29 +316,16 @@ var server = http.createServer(function(request, response) {
         case "/GpsStations/":
             GetStationsPerGps(response, urlParts.query);
             break;
+        case "/Address/":
+            GetAddressValues(response, urlParts.query);
+            break;
+        case "/PlzLookup/":
+            GetFromPlz(response, urlParts.query);
+            break;
         default:
             emptyResponse(response);
             break;
     }
-
-//        var req = http.request(options, function(res) {
-//            console.log('STATUS: ' + res.statusCode);
-//            console.log('HEADERS: ' + JSON.stringify(res.headers));
-//            res.setEncoding('utf8');
-//            res.on('data', function (chunk) {
-//                console.log('BODY: ' + chunk);
-//                body = chunk;
-//            });
-//        });
-//
-//        req.on('error', function(e) {
-//            console.log('problem with request: ' + e.message);
-//        });
-//
-//        // write data to request body
-//        req.write('data\n');
-//        req.write('data\n');
-//        req.end();
 });
 
 util.debug('Listening on Port: ' + (process.env.PORT || 3000));
