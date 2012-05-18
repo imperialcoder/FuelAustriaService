@@ -84,6 +84,7 @@ function GetAllStationsForFederalState(response, urlParts){
 
             try {
                 pageJson = JSON.parse(pageData);
+                pageJson = checkSpritPrice(pageJson);
             } catch (SyntaxError) {
                 util.debug('Invalid JSON:');
                 util.debug(pageData);
@@ -132,6 +133,7 @@ function GetStationsForDistrict(response, urlParts){
 
             try {
                 pageJson = JSON.parse(pageData);
+                pageJson = checkSpritPrice(pageJson);
             } catch (SyntaxError) {
                 util.debug('Invalid JSON:');
                 util.debug(pageData);
@@ -180,6 +182,7 @@ function GetStationsPerGps(response, urlParts) {
 
             try {
                 pageJson = JSON.parse(pageData);
+                pageJson = checkSpritPrice(pageJson);
             } catch (SyntaxError) {
                 util.debug('Invalid JSON:');
                 util.debug(pageData);
@@ -218,6 +221,16 @@ function getFederalState(stateObjects){
     var result = { success: true };
     result.states = states;
     return result;
+}
+
+function checkSpritPrice(stations){
+    var allowedStations = [];
+    stations.forEach(function(station){
+        if(station.spritPrice[0].amount !== ''){
+            allowedStations.push(station);
+        }
+    });
+    return allowedStations;
 }
 
 function emptyResponse(response) {
