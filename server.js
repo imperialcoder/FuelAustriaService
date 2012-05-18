@@ -40,7 +40,7 @@ function GetFederalStatesAndDistricts(response){
 
             if(!pageJson) {
                 response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-                response.write(JSON.stringify({success: false, erroCode: maintenanceError}));
+                response.write(JSON.stringify({success: false, errorCode: maintenanceError}));
                 response.end('\n');
             } else {
 
@@ -155,6 +155,54 @@ function GetStationsForDistrict(response, urlParts){
         });
 }
 
+//http://127.0.0.1:3000/GpsStations/?fuel=DIE&closedStations=checked&longi=15.439504&lati=47.070714
+function GetStationsPerGps(response, urlParts) {
+    var data = '[\"' + urlParts.closedStations + '\",\"' + urlParts.fuel +'\",' + urlParts.longi + ',' + urlParts.lati +',' + urlParts.longi + ',' + urlParts.lati +']';
+    data = '/ts/GasStationServlet?data=' + encodeURIComponent(data);
+
+    var options = {
+        host: 'www.spritpreisrechner.at',
+        port: 80,
+        path: data,
+        method: "GET"
+    };
+
+
+    http.get(options, function(res) {
+        var pageData = "";
+
+        res.on('data', function (chunk) {
+            pageData += chunk;
+        });
+
+        res.on('end', function(){
+            var pageJson = undefined;
+
+            try {
+                pageJson = JSON.parse(pageData);
+            } catch (SyntaxError) {
+                util.debug('Invalid JSON:');
+                util.debug(pageData);
+            }
+
+            if(!pageJson) {
+                response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+                response.write(JSON.stringify({success: false, errorCode: maintenanceError}));
+                response.end('\n');
+            } else {
+                response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+                response.write(JSON.stringify({success: true, data: pageJson}));
+                response.end();
+            }
+        });
+    }).on('error', function(e) {
+            util.debug("Got error: " + e.stack);
+            response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+            response.write(JSON.stringify({success: false, errorCode: serverError}));
+            response.end('\n');
+        });
+}
+
 //helper
 function getFederalState(stateObjects){
     var states = [];
@@ -193,6 +241,9 @@ var server = http.createServer(function(request, response) {
         case "/DistrictStations/":
             GetStationsForDistrict(response, urlParts.query);
             break;
+        case "/GpsStations/":
+            GetStationsPerGps(response, urlParts.query);
+            break;
         default:
             emptyResponse(response);
             break;
@@ -218,6 +269,6 @@ var server = http.createServer(function(request, response) {
 //        req.end();
 });
 
-util.debug('Listening on Port: ' + (process.env.PORT || 30000));
-server.listen(process.env.PORT || 30000);
+util.debug('Listening on Port: ' + (process.env.PORT || 3000));
+server.listen(process.env.PORT || 3000);
 
