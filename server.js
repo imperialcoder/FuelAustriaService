@@ -1,7 +1,7 @@
 var util = require("util"),
     http = require("http"),
     url = require("url"),
-    querystring = require('querystring');
+    queryString = require('querystring');
 
 var maintenanceError = 1,
     serverError = 2;
@@ -41,7 +41,7 @@ function GetFederalStatesAndDistricts(response){
 
             if(!pageJson) {
                 response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-                response.write(JSON.stringify({success: false, errorCode: maintenanceError}));
+                response.write(JSON.stringify({success: false, errorCode: maintenanceError, errorText: pageData}));
                 response.end('\n');
             } else {
 
@@ -62,8 +62,9 @@ function GetFederalStatesAndDistricts(response){
 
 //http://127.0.0.1:3000/AllStations/?federalState=1&fuel=DIE&closedStations=checked
 function GetAllStationsForFederalState(response, urlParts){
-    var data = '[' + urlParts.federalState + ', \"BL\", \"' + urlParts.fuel +'\", \"' + urlParts.closedStations + '\"]';
-    data = '/ts/BezirkStationServlet?data=' + encodeURIComponent(data);
+    //var data = '[' + urlParts.federalState + ', \"BL\", \"' + urlParts.fuel +'\", \"' + urlParts.closedStations + '\"]';
+    var data = [urlParts.federalState, 'BL', urlParts.fuel, urlParts.closedStations];
+    data = '/ts/BezirkStationServlet?data=' + JSON.stringify(data);
 
     var options = {
         host: 'www.spritpreisrechner.at',
@@ -85,7 +86,7 @@ function GetAllStationsForFederalState(response, urlParts){
 
             try {
                 pageJson = JSON.parse(pageData);
-                pageJson = checkSpritPrice(pageJson);
+                //pageJson = checkSpritPrice(pageJson);
             } catch (SyntaxError) {
                 util.debug('Invalid JSON:');
                 util.debug(pageData);
@@ -93,7 +94,7 @@ function GetAllStationsForFederalState(response, urlParts){
 
             if(!pageJson) {
                 response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-                response.write(JSON.stringify({success: false, errorCode: maintenanceError}));
+                response.write(JSON.stringify({success: false, errorCode: maintenanceError, errorText: pageData}));
                 response.end('\n');
             } else {
                 response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
@@ -111,7 +112,8 @@ function GetAllStationsForFederalState(response, urlParts){
 
 //http://127.0.0.1:3000/DistrictStations/?district=101&fuel=DIE&closedStations=checked
 function GetStationsForDistrict(response, urlParts){
-    var data = '[' + urlParts.district + ', \"PB\", \"' + urlParts.fuel +'\", \"' + urlParts.closedStations + '\"]';
+    //var data = '[' + urlParts.district + ', \"PB\", \"' + urlParts.fuel +'\", \"' + urlParts.closedStations + '\"]';
+    var data = [urlParts.district, 'PB', urlParts.fuel, urlParts.closedStations];
     data = '/ts/BezirkStationServlet?data=' + encodeURIComponent(data);
 
     var options = {
@@ -134,7 +136,7 @@ function GetStationsForDistrict(response, urlParts){
 
             try {
                 pageJson = JSON.parse(pageData);
-                pageJson = checkSpritPrice(pageJson);
+                //pageJson = checkSpritPrice(pageJson);
             } catch (SyntaxError) {
                 util.debug('Invalid JSON:');
                 util.debug(pageData);
@@ -142,7 +144,7 @@ function GetStationsForDistrict(response, urlParts){
 
             if(!pageJson) {
                 response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-                response.write(JSON.stringify({success: false, errorCode: maintenanceError}));
+                response.write(JSON.stringify({success: false, errorCode: maintenanceError, errorText: pageData}));
                 response.end('\n');
             } else {
                 response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
@@ -160,8 +162,9 @@ function GetStationsForDistrict(response, urlParts){
 
 //http://127.0.0.1:3000/GpsStations/?fuel=DIE&closedStations=checked&longi=15.439504&lati=47.070714
 function GetStationsPerGps(response, urlParts) {
-    var data = '[\"' + urlParts.closedStations + '\",\"' + urlParts.fuel +'\",' + urlParts.longi + ',' + urlParts.lati +',' + urlParts.longi + ',' + urlParts.lati +']';
-    data = '/ts/GasStationServlet?data=' + encodeURIComponent(data);
+    //var data = '[\"' + urlParts.closedStations + '\",\"' + urlParts.fuel +'\",' + urlParts.longi + ',' + urlParts.lati +',' + urlParts.longi + ',' + urlParts.lati +']';
+    var data = [urlParts.closedStations, urlParts.fuel, urlParts.longi, urlParts.lati, urlParts.longi, urlParts.lati];
+    data = '/ts/GasStationServlet?data=' + JSON.stringify(data);
 
     var options = {
         host: 'www.spritpreisrechner.at',
@@ -183,7 +186,7 @@ function GetStationsPerGps(response, urlParts) {
 
             try {
                 pageJson = JSON.parse(pageData);
-                pageJson = checkSpritPrice(pageJson);
+                //pageJson = checkSpritPrice(pageJson);
             } catch (SyntaxError) {
                 util.debug('Invalid JSON:');
                 util.debug(pageData);
@@ -191,7 +194,7 @@ function GetStationsPerGps(response, urlParts) {
 
             if(!pageJson) {
                 response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-                response.write(JSON.stringify({success: false, errorCode: maintenanceError}));
+                response.write(JSON.stringify({success: false, errorCode: maintenanceError, errorText: pageData}));
                 response.end('\n');
             } else {
                 response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
@@ -207,17 +210,10 @@ function GetStationsPerGps(response, urlParts) {
         });
 }
 
+//http://127.0.0.1:3000/Address/?address=Graz
 function GetAddressValues(response, urlParts){
-    var data = {};
-    data.q = urlParts.address;
-    data.maxRows = 10;
-    data.country= 'AT';
-    data.fuzzy = 0.8;
-    data.featureClass= 'P';
-    data.username = 'imperialcoder';
-    util.debug(querystring.stringify(data));
-    data = '/searchJSON?' + querystring.stringify(data);
-    util.debug(data);
+    var data = {q: encodeURIComponent(urlParts.address), maxRows: 10, country: 'AT', fuzzy:0.8, featureClass: 'P', username:'imperialcoder' };
+    data = '/searchJSON?' + queryString.stringify(data);
 
     // http://api.geonames.org/searchJSON?q=Söchau&country=AT&maxRows=10&username=demo&lang=de&fuzzy=0.8&featureClass=P
 
@@ -249,7 +245,58 @@ function GetAddressValues(response, urlParts){
 
             if(!pageJson) {
                 response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-                response.write(JSON.stringify({success: false, errorCode: maintenanceError}));
+                response.write(JSON.stringify({success: false, errorCode: maintenanceError, errorText: pageData}));
+                response.end('\n');
+            } else {
+                response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+                response.write(JSON.stringify({success: true, data: pageJson}));
+                response.end();
+            }
+        });
+    }).on('error', function(e) {
+            util.debug("Got error: " + e.stack);
+            response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+            response.write(JSON.stringify({success: false, errorCode: serverError}));
+            response.end('\n');
+        });
+}
+
+//http://127.0.0.1:3000/PlzLookup/?plz=8362
+function GetFromPlz(response, urlParts){
+    var data = {postalcode:urlParts.plz, country: 'AT', username:'imperialcoder' };
+    data = '/postalCodeLookupJSON?' + queryString.stringify(data);
+
+    // http://api.geonames.org/postalCodeLookupJSON?postalcode=8362&country=AT&username=demo
+
+    var options = {
+        host: 'api.geonames.org',
+        port: 80,
+        path: data,
+        method: "GET"
+    };
+
+
+    http.get(options, function(res) {
+        var pageData = "";
+
+        res.on('data', function (chunk) {
+            pageData += chunk;
+        });
+
+        res.on('end', function(){
+            var pageJson = undefined;
+
+            try {
+                pageJson = JSON.parse(pageData);
+                pageJson = pageJson.postalcodes;
+            } catch (SyntaxError) {
+                util.debug('Invalid JSON:');
+                util.debug(pageData);
+            }
+
+            if(!pageJson) {
+                response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+                response.write(JSON.stringify({success: false, errorCode: maintenanceError, errorText: pageData}));
                 response.end('\n');
             } else {
                 response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
@@ -282,15 +329,15 @@ function getFederalState(stateObjects){
     return result;
 }
 
-function checkSpritPrice(stations){
-    var allowedStations = [];
-    stations.forEach(function(station){
-        if(station.spritPrice[0].amount !== ''){
-            allowedStations.push(station);
-        }
-    });
-    return allowedStations;
-}
+//function checkSpritPrice(stations){
+//    var allowedStations = [];
+//    stations.forEach(function(station){
+//        if(station.spritPrice[0].amount !== ''){
+//            allowedStations.push(station);
+//        }
+//    });
+//    return allowedStations;
+//}
 
 function emptyResponse(response) {
     response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
