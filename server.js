@@ -114,7 +114,7 @@ function GetAllStationsForFederalState(response, urlParts){
 function GetStationsForDistrict(response, urlParts){
     //var data = '[' + urlParts.district + ', \"PB\", \"' + urlParts.fuel +'\", \"' + urlParts.closedStations + '\"]';
     var data = [urlParts.district, 'PB', urlParts.fuel, urlParts.closedStations];
-    data = '/ts/BezirkStationServlet?data=' + encodeURIComponent(data);
+    data = '/ts/BezirkStationServlet?data=' + JSON.stringify(data);
 
     var options = {
         host: 'www.spritpreisrechner.at',
