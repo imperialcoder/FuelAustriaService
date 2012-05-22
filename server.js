@@ -12,7 +12,33 @@ process.on('uncaughtException', function (err) {
 
 util.debug("Starting");
 
-//http://127.0.0.1:3000/BaseData/
+function FuelAustria(method, response, urlParts){
+    switch (method) {
+        case "BaseData":
+            GetFederalStatesAndDistricts(response);
+            break;
+        case "AllStations":
+            GetAllStationsForFederalState(response, urlParts);
+            break;
+        case "DistrictStations":
+            GetStationsForDistrict(response, urlParts);
+            break;
+        case "GpsStations":
+            GetStationsPerGps(response, urlParts);
+            break;
+        case "Address":
+            GetAddressValues(response, urlParts);
+            break;
+        case "PlzLookup":
+            GetFromPlz(response, urlParts);
+            break;
+        default:
+            emptyResponse(response);
+            break;
+    }
+}
+
+//http://127.0.0.1:3000/FuelAustria/BaseData/
 function GetFederalStatesAndDistricts(response){
 
     var options = {
@@ -60,7 +86,7 @@ function GetFederalStatesAndDistricts(response){
     });
 }
 
-//http://127.0.0.1:3000/AllStations/?federalState=1&fuel=DIE&closedStations=checked
+//http://127.0.0.1:3000/FuelAustria/AllStations/?federalState=1&fuel=DIE&closedStations=checked
 function GetAllStationsForFederalState(response, urlParts){
     //var data = '[' + urlParts.federalState + ', \"BL\", \"' + urlParts.fuel +'\", \"' + urlParts.closedStations + '\"]';
     var data = [urlParts.federalState, 'BL', urlParts.fuel, urlParts.closedStations];
@@ -110,7 +136,7 @@ function GetAllStationsForFederalState(response, urlParts){
         });
 }
 
-//http://127.0.0.1:3000/DistrictStations/?district=101&fuel=DIE&closedStations=checked
+//http://127.0.0.1:3000/FuelAustria/DistrictStations/?district=101&fuel=DIE&closedStations=checked
 function GetStationsForDistrict(response, urlParts){
     //var data = '[' + urlParts.district + ', \"PB\", \"' + urlParts.fuel +'\", \"' + urlParts.closedStations + '\"]';
     var data = [urlParts.district, 'PB', urlParts.fuel, urlParts.closedStations];
@@ -160,7 +186,7 @@ function GetStationsForDistrict(response, urlParts){
         });
 }
 
-//http://127.0.0.1:3000/GpsStations/?fuel=DIE&closedStations=checked&longi=15.439504&lati=47.070714
+//http://127.0.0.1:3000/FuelAustria/GpsStations/?fuel=DIE&closedStations=checked&longi=15.439504&lati=47.070714
 function GetStationsPerGps(response, urlParts) {
     //var data = '[\"' + urlParts.closedStations + '\",\"' + urlParts.fuel +'\",' + urlParts.longi + ',' + urlParts.lati +',' + urlParts.longi + ',' + urlParts.lati +']';
     var data = [urlParts.closedStations, urlParts.fuel, urlParts.longi, urlParts.lati, urlParts.longi, urlParts.lati];
@@ -210,7 +236,7 @@ function GetStationsPerGps(response, urlParts) {
         });
 }
 
-//http://127.0.0.1:3000/Address/?address=Graz
+//http://127.0.0.1:3000/FuelAustria/Address/?address=Graz
 function GetAddressValues(response, urlParts){
     var data = {q: encodeURIComponent(urlParts.address), maxRows: 10, country: 'AT', fuzzy:0.8, featureClass: 'P', username:'imperialcoder' };
     data = '/searchJSON?' + queryString.stringify(data);
@@ -261,7 +287,7 @@ function GetAddressValues(response, urlParts){
         });
 }
 
-//http://127.0.0.1:3000/PlzLookup/?plz=8362
+//http://127.0.0.1:3000/FuelAustria/PlzLookup/?plz=8362
 function GetFromPlz(response, urlParts){
     var data = {postalcode:urlParts.plz, country: 'AT', username:'imperialcoder' };
     data = '/postalCodeLookupJSON?' + queryString.stringify(data);
@@ -329,16 +355,6 @@ function getFederalState(stateObjects){
     return result;
 }
 
-//function checkSpritPrice(stations){
-//    var allowedStations = [];
-//    stations.forEach(function(station){
-//        if(station.spritPrice[0].amount !== ''){
-//            allowedStations.push(station);
-//        }
-//    });
-//    return allowedStations;
-//}
-
 function emptyResponse(response) {
     response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
     response.write(JSON.stringify({success: true, data: 'Command not recognized'}));
@@ -349,28 +365,21 @@ function emptyResponse(response) {
 var server = http.createServer(function(request, response) {
 
     var urlParts = url.parse(request.url,true);
+    var urlSlashSplit = request.url.split('/');
+    var urlSplit = urlSlashSplit.filter(function(e) {
+        if(e !==""){
+            return true;
+        }
+    });
 
-    switch (urlParts.pathname) {
-        case "/BaseData/":
-            GetFederalStatesAndDistricts(response);
-            break;
-        case "/AllStations/":
-            GetAllStationsForFederalState(response, urlParts.query);
-            break;
-        case "/DistrictStations/":
-            GetStationsForDistrict(response, urlParts.query);
-            break;
-        case "/GpsStations/":
-            GetStationsPerGps(response, urlParts.query);
-            break;
-        case "/Address/":
-            GetAddressValues(response, urlParts.query);
-            break;
-        case "/PlzLookup/":
-            GetFromPlz(response, urlParts.query);
+    switch(urlSplit[0]) {
+        case "FuelAustria":
+            FuelAustria(urlSplit[1], response, urlParts.query);
             break;
         default:
-            emptyResponse(response);
+            response.writeHead(200, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*" });
+            response.write("<h2>Service up and running, see docs for commands</h2>");
+            response.end();
             break;
     }
 });
