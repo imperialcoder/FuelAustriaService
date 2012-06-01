@@ -1,8 +1,5 @@
 {
-    "name": "fuelAustriaService",
-    "version": "0.1.0",
-    "scripts": {
-        "start": "node server.js"
-    },
-    "dependencies":{}
+  "name":"fuelaustriaservice",
+  "node":"0.6.17",
+  "author":"imperialcoder"
 }
