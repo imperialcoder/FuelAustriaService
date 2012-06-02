@@ -1,5 +1,6 @@
 {
   "name":"fuelaustriaservice",
+  "version":"0.1.0",
   "node":"0.6.17",
   "author":"imperialcoder"
 }
