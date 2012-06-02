@@ -384,6 +384,6 @@ var server = http.createServer(function(request, response) {
     }
 });
 
-util.debug('Listening on Port: ' + (process.env.PORT || 3000));
-server.listen(process.env.PORT || 3000);
+util.debug('Listening on Port: ' + (process.env['app_port'] || 3000));
+server.listen(process.env['app_port'] || 3000);
 
