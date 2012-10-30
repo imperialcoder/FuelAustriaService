@@ -1,4 +1,4 @@
-﻿var util = require("util"),
+var util = require("util"),
 	http = require("http"),
 	url = require("url"),
 	queryString = require('querystring');
@@ -341,15 +341,16 @@ function GetFromPlz(response, urlParts){
 //helper
 function getFederalState(stateObjects){
 	var states = [];
-	states.push({id: stateObjects.Burgenland.code, data: stateObjects.Burgenland});
-	states.push({id: stateObjects.Kärnten.code, data: stateObjects.Kärnten});
-	states.push({id: stateObjects.Niederösterreich.code, data: stateObjects.Niederösterreich});
-	states.push({id: stateObjects.Oberösterreich.code, data: stateObjects.Oberösterreich});
-	states.push({id: stateObjects.Salzburg.code, data: stateObjects.Salzburg});
-	states.push({id: stateObjects.Steiermark.code, data: stateObjects.Steiermark});
-	states.push({id: stateObjects.Tirol.code, data: stateObjects.Tirol});
-	states.push({id: stateObjects.Vorarlberg.code, data: stateObjects.Vorarlberg});
-	states.push({id: stateObjects.Wien.code, data: stateObjects.Wien});
+
+	for(var key in stateObjects){
+		var attrValue = stateObjects[key];
+		states.push({ id: attrValue.code, data: attrValue});
+	}
+
+	states.sort(function(a,b){
+		return a.id - b.id;
+	})
+
 	var result = { success: true };
 	result.states = states;
 	return result;
