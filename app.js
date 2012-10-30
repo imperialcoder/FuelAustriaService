@@ -1,4 +1,4 @@
-var util = require("util"),
+﻿var util = require("util"),
 	http = require("http"),
 	url = require("url"),
 	queryString = require('querystring');
@@ -385,4 +385,4 @@ var server = http.createServer(function(request, response) {
 });
 
 util.debug('Listening on Port: ' + (process.env['app_port'] || 3000));
-server.listen(process.env['app_port'] || 3000);
+server.listen(process.env.VCAP_APP_PORT || 3000);
