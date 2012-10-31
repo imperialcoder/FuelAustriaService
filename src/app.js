@@ -379,11 +379,12 @@ var server = http.createServer(function(request, response) {
 			break;
 		default:
 			response.writeHead(200, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*" });
-			response.write("<h2>Service up and running, see docs for commands</h2>");
+			response.write("<h3>Service up and running, see docs for commands</h3>");
 			response.end();
 			break;
 	}
 });
 
 util.debug('Listening on Port: ' + (process.env['app_port'] || 3000));
-server.listen(process.env['app_port'] || 3000);
+server.listen(process.env.VCAP_APP_PORT || 3000);
+//server.listen(process.env['app_port'] || 3000);
