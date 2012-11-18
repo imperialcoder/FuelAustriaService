@@ -11,7 +11,7 @@ Connection: Keep-Alive
 Cache-Control: no-cache
 Cookie: JSESSIONID=0000WAyOXQh88P7cFACUbPj0fYp:-1; webappsStaticCookie=axpbbgw2; asmpCookieMaster=a/3232954951353015573346; mkmsisdn=dummy; AAAproxySession=axpaaa1.vipnet.hr/90303171216437692831353015; aaaStaticCookie=axpaaa1; __utma=63090096.115100055.1353015571.1353015571.1353015571.1; __utmb=63090096.2.10.1353015571; __utmc=63090096; __utmz=63090096.1353015571.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)
 
-userRequestURL=https%253A%252F%252Frechnung.bob.at%252F&service=obp_bob_asmp&serviceRegistrationURL=&level=0&ticket=BOBKKW&loginMsisdn=436642026296&kkw=DeWitt&submit.x=34&submit.y=14
+userRequestURL=https%253A%252F%252Frechnung.bob.at%252F&service=obp_bob_asmp&serviceRegistrationURL=&level=0&ticket=BOBKKW&loginMsisdn=[n]&kkw=[p]&submit.x=34&submit.y=14
 
 
 
