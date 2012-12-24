@@ -36,9 +36,9 @@ var server = http.createServer(function(request, response) {
 	}
 });
 
-util.debug('process.env[app_port] ' + process.env['app_port']);
-util.debug('process.env.VCAP_APP_PORT '+ process.env.VCAP_APP_PORT);
-util.debug('process.env ' + JSON.stringify(process.env));
+//util.debug('process.env[app_port] ' + process.env['app_port']);
+//util.debug('process.env.VCAP_APP_PORT '+ process.env.VCAP_APP_PORT);
+//util.debug('process.env ' + JSON.stringify(process.env));
 util.debug('Listening on Port: ' + (process.env.VCAP_APP_PORT || 3000));
 server.listen(process.env.VCAP_APP_PORT || 3000);
 //server.listen(process.env['app_port'] || 3000);

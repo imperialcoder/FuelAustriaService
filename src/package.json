@@ -1,5 +1,19 @@
 {
-  "name":"fuelaustria",
-  "node":"0.6.17",
-  "author":"imperialcoder"
+  "name": "fuelaustria",
+  "author": "imperialcoder <support@imperialcoder.com> (http://imperialcoder.com)",
+  "main": "./app.js",
+  "version": "0.0.1",
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  },
+  "homepage": "http://imperialcoder.com",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/imperialcoder/FuelAustriaService.git"
+  },
+  "dependencies": {
+  	"jsdom": ">=0.2.19"
+  }
 }
