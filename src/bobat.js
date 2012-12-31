@@ -51,9 +51,7 @@ function getBobData(response, urlParts) {
 			"submit.y": 14
 		};
 		var data = queryString.stringify(dataJson);
-		// var data = 'userRequestURL=https%253A%252F%252Frechnung.bob.at%252F&service=obp_bob_asmp&serviceRegistrationURL=&level=0&ticket=BOBKKW&loginMsisdn=&kkw=&submit.x=34&submit.y=14';
-		//var followerCookies = '__utma=63090096.1053053835.1353005626.1353442759.1353608754.3; __utmb=63090096.6.10.1353608754; __utmc=63090096; __utmz=63090096.1353442759.2.2.utmcsr=rechnung.bob.at|utmccn=(referral)|utmcmd=referral|utmcct=/';
-		
+        
 		res.on('end', function(){
 
 			if(res.headers["set-cookie"]){
@@ -65,10 +63,8 @@ function getBobData(response, urlParts) {
 				'Content-Type': 'application/x-www-form-urlencoded',
 				'Content-Length': data.length,
 				'Connection': 'keep-alive',
-				'Cookie': cookies.join('; ') //+ '; __utma=63090096.1053053835.1353005626.1353005626.1353442759.2; __utmb=63090096.10.10.1353442759; __utmz=63090096.1353442759.2.2.utmcsr=rechnung.bob.at|utmccn=(referral)|utmcmd=referral|utmcct=/'
+				'Cookie': cookies.join('; ') 
 			};
-
-			//util.debug(res.statusCode + ', ' + res.headers.location);
 			
 
 			var req = https.request(postOptions, function(resp){
@@ -98,7 +94,7 @@ function getBobData(response, urlParts) {
 							method: "GET",
 							path: '/',
 							headers: {
-								'Cookie': cookies.join('; '), //+ '; __utma=63090096.1053053835.1353005626.1353005626.1353442759.2; __utmb=63090096.10.10.1353442759; __utmz=63090096.1353442759.2.2.utmcsr=rechnung.bob.at|utmccn=(referral)|utmcmd=referral|utmcct=/'
+								'Cookie': cookies.join('; '), 
 								'Connection': 'keep-alive'
 							}
 						};
@@ -110,8 +106,6 @@ function getBobData(response, urlParts) {
 							});
 
 							respo.on('end', function(){
-								//util.debug(pageData);
-								//util.debug(respo.statusCode + ', ' + respo.headers.location);
                                 
                                 var $ = cheerio.load(pageData);
                                 
@@ -159,7 +153,7 @@ function getBobData(response, urlParts) {
 			req.end();
 
 			req.on('error', function(e) {
-				console.error(e.stackxsdy);
+				errorHandler(e.stack, response, serverError);
 			});
 
 		});
@@ -179,7 +173,7 @@ function checkForWrongData(pageData, response) {
 
 function errorHandler(errorText, response, errorCode) {
 	util.debug("Got error: " + errorText);
-	response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+	response.writeHead(errorCode === 3 ? 401 : 500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
 	response.write(JSON.stringify({success: false, errorCode: errorCode }));
 	response.end('\n');
 	return;
