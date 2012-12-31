@@ -1,9 +1,7 @@
 var util = require("util"),
 	https = require('https'),
-	jsdom = require('jsdom'),
 	queryString = require('querystring'),
-	crypto = require('crypto'),
-	fs = require("fs");
+    cheerio = require("cheerio");
 
 var maintenanceError = 1,
 	serverError = 2,
@@ -114,51 +112,32 @@ function getBobData(response, urlParts) {
 							respo.on('end', function(){
 								//util.debug(pageData);
 								//util.debug(respo.statusCode + ', ' + respo.headers.location);
+                                
+                                var $ = cheerio.load(pageData);
+                                
+                                var returnObject = { "clientInfo": {}, "costManager": {} };
+                                
+                                var clientAddress = $('.client_info .leftSide').text().trim();
+                                
+                                returnObject.clientInfo[clientAddress.split(':')[0]] = clientAddress.split(':')[1].replace(/(\r\n|\n|\r|\t)/gm,"").trim();
+                                
+                                
+                                $('.client_info .rightSide .row .firstCell').each(function(i, html) {
+                                    var splits = $(html).text().trim().split(':');
+                                    returnObject.clientInfo[splits[0]] = splits[1].replace(/(\r\n|\n|\r|\t)/gm,"").trim();
+                                });
+                                
+                                $('.cost_manager .contentLayer .table .row').each(function(i, html) {
+                                    var cells = $(html).find('.cell');
+                                    returnObject.costManager[$(cells[0]).text().trim()] = $(cells[cells.length-1]).text().replace(/(\r\n|\n|\r|\t)/gm,"").trim();
+                                });
+                                
+								returnObject.duration = Math.abs(new Date() - startDate)/one_sec;
 
-								jsdom.env(pageData, function (errors, window) {
-									if(errors){
-										errorHandler(JSON.stringify(errors), response, serverError);
-										return;
-									}
-
-									var returnObject = { clientInfo: {}, "costManager": { "order": {}, "remaining": {} } };
-
-									// client_info
-									var clientAddress = window.document.getElementsByClassName('client_info')[0].getElementsByClassName('contentLayer')[0].getElementsByClassName('leftSide')[0].textContent.trim();
-									returnObject.clientInfo[clientAddress.split(':')[0]] = clientAddress.split(':')[1].replace(/(\r\n|\n|\r|\t)/gm,"").trim();
-									var clientInfoRightSide = window.document.getElementsByClassName('client_info')[0].getElementsByClassName('contentLayer')[0].getElementsByClassName('rightSide')[0].getElementsByClassName('row');
-									var clientNbr = clientInfoRightSide[0].textContent.trim().split(':');
-									var clientPhoneNbr = clientInfoRightSide[1].textContent.trim().split(':');
-									returnObject.clientInfo[clientNbr[0]] = clientNbr[1].replace(/(\r\n|\n|\r|\t)/gm,"").trim();
-									returnObject.clientInfo[clientPhoneNbr[0]] = clientPhoneNbr[1].replace(/(\r\n|\n|\r|\t)/gm,"").trim();
-									
-									// cost_manager
-									var bestellungsRows = window.document.getElementsByClassName('cost_manager')[0].getElementsByClassName('contentLayer')[0].getElementsByClassName('table')[0].getElementsByClassName('row');
-									var restEinheitenRows = window.document.getElementsByClassName('cost_manager')[0].getElementsByClassName('contentLayer')[0].getElementsByClassName('table')[1].getElementsByClassName('row');
-									var i = 0,
-										cells;
-
-
-									for(i; i<bestellungsRows.length; i++) {
-										cells = bestellungsRows[i].getElementsByClassName('cell');
-										
-										returnObject.costManager.order[cells[0].textContent.trim()] = cells[1].textContent.trim().replace(/(\r\n|\n|\r|\t)/gm,"");
-									}
-									i = 0;
-									for (i; i < restEinheitenRows.length; i++) {
-										cells = restEinheitenRows[i].getElementsByClassName('cell');
-
-										returnObject.costManager.remaining[cells[0].textContent.trim()] = cells[2].textContent.trim().replace(/(\r\n|\n|\r|\t)/gm,"");
-									}
-									window.close();
-
-									returnObject.duration = Math.abs(new Date() - startDate)/one_sec;
-
-									// util.debug('done');
-									response.writeHead(respo.statusCode, { "Content-Type": "application/json;charset=utf-8", "Access-Control-Allow-Origin": "*" });
-									response.write(JSON.stringify({success: true, data: returnObject}));
-									response.end('\n');
-								});
+								// util.debug('done');
+								response.writeHead(respo.statusCode, { "Content-Type": "application/json;charset=utf-8", "Access-Control-Allow-Origin": "*" });
+								response.write(JSON.stringify({success: true, data: returnObject}));
+								response.end('\n');
 							});
 
 							respo.on('error', function(e){
@@ -190,17 +169,12 @@ function getBobData(response, urlParts) {
 }
 
 function checkForWrongData(pageData, response) {
-	jsdom.env(pageData,	function (errors, window){
-		if(errors){
-			errorHandler(JSON.stringify(errors), response, serverError);
-			return;
-		}
+	var $ = cheerio.load(pageData);
 
-		if(window.document.getElementsByClassName('messageIcon').length > 0) {
-			errorHandler('wrongNumberOrPassword', response, wrongNumberOrPassword);
-			return;
-		}
-	});
+	if($('.messageIcon').length > 0) {
+		errorHandler('wrongNumberOrPassword', response, wrongNumberOrPassword);
+		return;
+	}
 }
 
 function errorHandler(errorText, response, errorCode) {
