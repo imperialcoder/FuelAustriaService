@@ -46,7 +46,7 @@ function getBobData(response, urlParts) {
 			level: 0,
 			ticket: 'BOBKKW',
 			loginMsisdn: response.post ? response.post.id : '',
-			kkw: response.post ? response.post.pwd : '',
+			kkw: response.post ? new Buffer(response.post.pwd, 'base64').toString() : '',
 			"submit.x": 34,
 			"submit.y": 14
 		};
