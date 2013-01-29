@@ -1,4 +1,5 @@
 var util = require("util"),
+    http = require('http'),
 	https = require('https'),
 	queryString = require('querystring'),
     cheerio = require("cheerio");
@@ -35,6 +36,20 @@ function getBobData(response, urlParts) {
 		path: '/asmp/ProcessLoginServlet/axpaaa1/axpbbgw2?aaacookie=axpaaa1&eacookie=axpbbgw2',
 		method: 'POST'
 	};
+    
+    var logoutOptions = {
+        host: 'rechnung.bob.at',
+        port: 443,
+        path: '/logout.obp',
+        method: 'GET'
+    };
+    
+    var finalLogoutOptions = {
+        host: 'asmp.bob.at',
+        port: 80,
+        path: '/asmp/logout?reloginDisableAutologin=https%3A%2F%2Frechnung.bob.at',
+        method: 'GET'
+    };
 
 	https.get(options, function(res) {
 		var pageData = "";
@@ -46,7 +61,7 @@ function getBobData(response, urlParts) {
 			level: 0,
 			ticket: 'BOBKKW',
 			loginMsisdn: response.post ? response.post.id : '',
-			kkw: response.post ? new Buffer(response.post.pwd, 'base64').toString() : '',
+			kkw: response.post ? new Buffer(response.post.pwd, 'base64').toString('utf8') : '',
 			"submit.x": 34,
 			"submit.y": 14
 		};
@@ -123,10 +138,40 @@ function getBobData(response, urlParts) {
                                 
                                 $('.cost_manager .contentLayer .table .row').each(function(i, html) {
                                     var cells = $(html).find('.cell');
-                                    returnObject.costManager[$(cells[0]).text().trim()] = $(cells[cells.length-1]).text().replace(/(\r\n|\n|\r|\t)/gm,"").trim();
+                                    if (cells && cells.length > 0) {
+                                        returnObject.costManager[$(cells[0]).text().trim()] = $(cells[cells.length-1]).text().replace(/(\r\n|\n|\r|\t)/gm,"").trim();
+                                    }
                                 });
                                 
 								returnObject.duration = Math.abs(new Date() - startDate)/one_sec;
+                                
+                                //logout
+                                https.get(logoutOptions, function(logoutResponse) {
+                                                                        
+                                    logoutResponse.on('end', function(chunk){
+                                        if(logoutResponse.statusCode === 302) {
+                                            http.get(finalLogoutOptions, function(finalLogoutResponse) {
+                                                finalLogoutResponse.on('end', function(chunk){
+                                                    if(finalLogoutResponse.statusCode === 302) {
+                                                        //logout done
+                                                    } else {
+                                                        //logout error
+                                                    }
+                                                });
+                                            }).on('error', function(e) {
+                                                errorHandler(e.stack, response, serverError);
+                                            });
+                                        } else {
+                                            util.debug('logout not completed');
+                                        }
+                                    });
+                                    
+                                    logoutResponse.on('error', function(e){
+                                        errorHandler(e.stack, response, serverError);
+                                    });
+                                }).on('error', function(e) {
+                                    errorHandler(e.stack, response, serverError);
+                                });
 
 								// util.debug('done');
 								response.writeHead(respo.statusCode, { "Content-Type": "application/json;charset=utf-8", "Access-Control-Allow-Origin": "*" });
