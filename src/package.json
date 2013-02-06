@@ -14,6 +14,7 @@
     "url": "git://github.com/imperialcoder/FuelAustriaService.git"
   },
   "dependencies": {
-    "cheerio": ">=0.10.5"
+    "cheerio": ">=0.10.5",
+    "geode": ">=0.0.2"
   }
 }

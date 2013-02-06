@@ -1,7 +1,8 @@
 var util = require("util"),
 	http = require("http"),
 	url = require("url"),
-	queryString = require('querystring');
+	queryString = require('querystring'),
+    geode = require("geode");
 
 var maintenanceError = 1,
 	serverError = 2;
@@ -37,7 +38,14 @@ module.exports = function(){
 	};
 };
 
-//http://127.0.0.1:3000/FuelAustria/BaseData/
+
+//if(!process.env.GEONAMES_USERNAME) {
+//    process.env.GEONAMES_USERNAME = '';
+//} else {
+//    util.debug(JSON.stringify(process.env));
+//}
+
+// GET /FuelAustria/BaseData/
 function GetFederalStatesAndDistricts(response){
 
 	var options = {
@@ -85,7 +93,7 @@ function GetFederalStatesAndDistricts(response){
 		});
 }
 
-//http://127.0.0.1:3000/FuelAustria/AllStations/?federalState=1&fuel=DIE&closedStations=checked
+// GET /FuelAustria/AllStations/?federalState=1&fuel=DIE&closedStations=checked
 function GetAllStationsForFederalState(response, urlParts){
 	//var data = '[' + urlParts.federalState + ', \"BL\", \"' + urlParts.fuel +'\", \"' + urlParts.closedStations + '\"]';
 	var data = [urlParts.federalState, 'BL', urlParts.fuel, urlParts.closedStations];
@@ -135,7 +143,7 @@ function GetAllStationsForFederalState(response, urlParts){
 		});
 }
 
-//http://127.0.0.1:3000/FuelAustria/DistrictStations/?district=101&fuel=DIE&closedStations=checked
+// GET /FuelAustria/DistrictStations/?district=101&fuel=DIE&closedStations=checked
 function GetStationsForDistrict(response, urlParts){
 	//var data = '[' + urlParts.district + ', \"PB\", \"' + urlParts.fuel +'\", \"' + urlParts.closedStations + '\"]';
 	var data = [urlParts.district, 'PB', urlParts.fuel, urlParts.closedStations];
@@ -185,7 +193,7 @@ function GetStationsForDistrict(response, urlParts){
 		});
 }
 
-//http://127.0.0.1:3000/FuelAustria/GpsStations/?fuel=DIE&closedStations=checked&longi=15.439504&lati=47.070714
+// GET /FuelAustria/GpsStations/?fuel=DIE&closedStations=checked&longi=15.439504&lati=47.070714
 function GetStationsPerGps(response, urlParts) {
 	//var data = '[\"' + urlParts.closedStations + '\",\"' + urlParts.fuel +'\",' + urlParts.longi + ',' + urlParts.lati +',' + urlParts.longi + ',' + urlParts.lati +']';
 	var data = [urlParts.closedStations, urlParts.fuel, urlParts.longi, urlParts.lati, urlParts.longi, urlParts.lati];
@@ -197,6 +205,12 @@ function GetStationsPerGps(response, urlParts) {
 		path: data,
 		method: "GET"
 	};
+    
+    var geo = new geode(process.env.GEONAMES_USERNAME || 'imperialcoder', {language: 'de', country : 'AT'})
+    
+    geo.findNearbyPlaceName({lat:'', lng:''}, function(err, results){
+        util.debug([err, results]);
+    });
 
 
 	http.get(options, function(res) {
@@ -222,6 +236,9 @@ function GetStationsPerGps(response, urlParts) {
 				response.write(JSON.stringify({success: false, errorCode: maintenanceError, errorText: pageData}));
 				response.end('\n');
 			} else {
+                
+                var federalStates = getFederalState(pageJson);
+                
 				response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
 				response.write(JSON.stringify({success: true, data: pageJson}));
 				response.end();
@@ -235,7 +252,7 @@ function GetStationsPerGps(response, urlParts) {
 		});
 }
 
-//http://127.0.0.1:3000/FuelAustria/Address/?address=Graz
+// GET /FuelAustria/Address/?address=Graz
 function GetAddressValues(response, urlParts){
 	var data = {q: encodeURIComponent(urlParts.address), maxRows: 10, country: 'AT', fuzzy:0.8, featureClass: 'P', username:'imperialcoder' };
 	data = '/searchJSON?' + queryString.stringify(data);
@@ -286,7 +303,7 @@ function GetAddressValues(response, urlParts){
 		});
 }
 
-//http://127.0.0.1:3000/FuelAustria/PlzLookup/?plz=8362
+// GET /FuelAustria/PlzLookup/?plz=8362
 function GetFromPlz(response, urlParts){
 	var data = {postalcode:urlParts.plz, country: 'AT', username:'imperialcoder' };
 	data = '/postalCodeLookupJSON?' + queryString.stringify(data);
