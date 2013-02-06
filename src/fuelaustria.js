@@ -2,10 +2,13 @@ var util = require("util"),
 	http = require("http"),
 	url = require("url"),
 	queryString = require('querystring'),
-    geode = require("geode");
+	geode = require('geode');
 
-var maintenanceError = 1,
-	serverError = 2;
+var errors = {
+	maintenanceError: 1,
+	serverError: 2,
+	gpsOutSideAustriaError: 3
+};
 
 module.exports = function(){
 
@@ -39,12 +42,6 @@ module.exports = function(){
 };
 
 
-//if(!process.env.GEONAMES_USERNAME) {
-//    process.env.GEONAMES_USERNAME = '';
-//} else {
-//    util.debug(JSON.stringify(process.env));
-//}
-
 // GET /FuelAustria/BaseData/
 function GetFederalStatesAndDistricts(response){
 
@@ -74,7 +71,7 @@ function GetFederalStatesAndDistricts(response){
 
 			if(!pageJson) {
 				response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-				response.write(JSON.stringify({success: false, errorCode: maintenanceError, errorText: pageData}));
+				response.write(JSON.stringify({success: false, errorCode: errors.maintenanceError, errorText: pageData}));
 				response.end('\n');
 			} else {
 
@@ -88,7 +85,7 @@ function GetFederalStatesAndDistricts(response){
 	}).on('error', function(e) {
 			util.debug("Got error: " + e.stack);
 			response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-			response.write(JSON.stringify({success: false, errorCode: serverError}));
+			response.write(JSON.stringify({success: false, errorCode: errors.serverError}));
 			response.end('\n');
 		});
 }
@@ -127,7 +124,7 @@ function GetAllStationsForFederalState(response, urlParts){
 
 			if(!pageJson) {
 				response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-				response.write(JSON.stringify({success: false, errorCode: maintenanceError, errorText: pageData}));
+				response.write(JSON.stringify({success: false, errorCode: errors.maintenanceError, errorText: pageData}));
 				response.end('\n');
 			} else {
 				response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
@@ -138,7 +135,7 @@ function GetAllStationsForFederalState(response, urlParts){
 	}).on('error', function(e) {
 			util.debug("Got error: " + e.stack);
 			response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-			response.write(JSON.stringify({success: false, errorCode: serverError}));
+			response.write(JSON.stringify({success: false, errorCode: errors.serverError}));
 			response.end('\n');
 		});
 }
@@ -177,7 +174,7 @@ function GetStationsForDistrict(response, urlParts){
 
 			if(!pageJson) {
 				response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-				response.write(JSON.stringify({success: false, errorCode: maintenanceError, errorText: pageData}));
+				response.write(JSON.stringify({success: false, errorCode: errors.maintenanceError, errorText: pageData}));
 				response.end('\n');
 			} else {
 				response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
@@ -188,7 +185,7 @@ function GetStationsForDistrict(response, urlParts){
 	}).on('error', function(e) {
 			util.debug("Got error: " + e.stack);
 			response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-			response.write(JSON.stringify({success: false, errorCode: serverError}));
+			response.write(JSON.stringify({success: false, errorCode: errors.serverError}));
 			response.end('\n');
 		});
 }
@@ -205,56 +202,65 @@ function GetStationsPerGps(response, urlParts) {
 		path: data,
 		method: "GET"
 	};
-    
-    var geo = new geode(process.env.GEONAMES_USERNAME || 'imperialcoder', {language: 'de', country : 'AT'})
-    
-    geo.findNearbyPlaceName({lat:'', lng:''}, function(err, results){
-        util.debug([err, results]);
-    });
+	
+	var geo = new geode(process.env.GEONAMES_USERNAME || 'demo', {language: 'de', country : 'AT'})
+	
+	geo.findNearbyPlaceName({lat:urlParts.lati, lng:urlParts.longi}, function(err, results){
+		if(err) {
+			util.debug(JSON.stringify([err, results]));
 
-
-	http.get(options, function(res) {
-		var pageData = "";
-
-		res.on('data', function (chunk) {
-			pageData += chunk;
-		});
-
-		res.on('end', function(){
-			var pageJson;
-
-			try {
-				pageJson = JSON.parse(pageData);
-				//pageJson = checkSpritPrice(pageJson);
-			} catch (SyntaxError) {
-				util.debug('Invalid JSON:');
-				util.debug(pageData);
-			}
-
-			if(!pageJson) {
-				response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-				response.write(JSON.stringify({success: false, errorCode: maintenanceError, errorText: pageData}));
-				response.end('\n');
-			} else {
-                
-                var federalStates = getFederalState(pageJson);
-                
-				response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-				response.write(JSON.stringify({success: true, data: pageJson}));
-				response.end();
-			}
-		});
-	}).on('error', function(e) {
-			util.debug("Got error: " + e.stack);
 			response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-			response.write(JSON.stringify({success: false, errorCode: serverError}));
+			response.write(JSON.stringify({success: false, errorCode: errors.serverError, errorText: JSON.stringify(err)}));
 			response.end('\n');
-		});
+		} else if(results.status) {
+			response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+			response.write(JSON.stringify({success: false, errorCode: errors.serverError, errorText:results}));
+			response.end('\n');
+		} else if(results.geonames[0].countryCode === 'AT') {
+			http.get(options, function(res) {
+				var pageData = "";
+
+				res.on('data', function (chunk) {
+					pageData += chunk;
+				});
+
+				res.on('end', function(){
+					var pageJson;
+
+					try {
+						pageJson = JSON.parse(pageData);
+					} catch (SyntaxError) {
+						util.debug('Invalid JSON:');
+						util.debug(pageData);
+					}
+
+					if(!pageJson) {
+						response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+						response.write(JSON.stringify({success: false, errorCode: errors.maintenanceError, errorText: pageData}));
+						response.end('\n');
+					} else {
+						response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+						response.write(JSON.stringify({success: true, data: pageJson}));
+						response.end();
+					}
+				});
+			}).on('error', function(e) {
+					util.debug("Got error: " + e.stack);
+					response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+					response.write(JSON.stringify({success: false, errorCode: errors.serverError}));
+					response.end('\n');
+				});
+		} else {
+			response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+			response.write(JSON.stringify({success: false, errorCode: errors.gpsOutSideAustriaError, errorText:'GPS location does not belong to Austria! Seems to belong to ' + results.geonames[0].countryName}));
+			response.end('\n');
+		}
+	});
 }
 
 // GET /FuelAustria/Address/?address=Graz
 function GetAddressValues(response, urlParts){
-	var data = {q: encodeURIComponent(urlParts.address), maxRows: 10, country: 'AT', fuzzy:0.8, featureClass: 'P', username:'imperialcoder' };
+	var data = {q: encodeURIComponent(urlParts.address), maxRows: 10, country: 'AT', fuzzy:0.8, featureClass: 'P', username:'' };
 	data = '/searchJSON?' + queryString.stringify(data);
 
 	// http://api.geonames.org/searchJSON?q=Söchau&country=AT&maxRows=10&username=demo&lang=de&fuzzy=0.8&featureClass=P
@@ -287,7 +293,7 @@ function GetAddressValues(response, urlParts){
 
 			if(!pageJson) {
 				response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-				response.write(JSON.stringify({success: false, errorCode: maintenanceError, errorText: pageData}));
+				response.write(JSON.stringify({success: false, errorCode: errors.maintenanceError, errorText: pageData}));
 				response.end('\n');
 			} else {
 				response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
@@ -298,14 +304,14 @@ function GetAddressValues(response, urlParts){
 	}).on('error', function(e) {
 			util.debug("Got error: " + e.stack);
 			response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-			response.write(JSON.stringify({success: false, errorCode: serverError}));
+			response.write(JSON.stringify({success: false, errorCode: errors.serverError}));
 			response.end('\n');
 		});
 }
 
 // GET /FuelAustria/PlzLookup/?plz=8362
 function GetFromPlz(response, urlParts){
-	var data = {postalcode:urlParts.plz, country: 'AT', username:'imperialcoder' };
+	var data = {postalcode:urlParts.plz, country: 'AT', username:'' };
 	data = '/postalCodeLookupJSON?' + queryString.stringify(data);
 
 	// http://api.geonames.org/postalCodeLookupJSON?postalcode=8362&country=AT&username=demo
@@ -338,7 +344,7 @@ function GetFromPlz(response, urlParts){
 
 			if(!pageJson) {
 				response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-				response.write(JSON.stringify({success: false, errorCode: maintenanceError, errorText: pageData}));
+				response.write(JSON.stringify({success: false, errorCode: errors.maintenanceError, errorText: pageData}));
 				response.end('\n');
 			} else {
 				response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
@@ -349,7 +355,7 @@ function GetFromPlz(response, urlParts){
 	}).on('error', function(e) {
 			util.debug("Got error: " + e.stack);
 			response.writeHead(500, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
-			response.write(JSON.stringify({success: false, errorCode: serverError}));
+			response.write(JSON.stringify({success: false, errorCode: errors.serverError}));
 			response.end('\n');
 		});
 }
